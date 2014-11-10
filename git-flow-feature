@@ -54,6 +54,7 @@ git flow feature rebase
 git flow feature checkout
 git flow feature pull
 git flow feature delete
+git flow feature request
 
 Manage your feature branches.
 
@@ -811,4 +812,41 @@ r,[no]remote     Delete remote branch
 	flag remote && echo "- Feature branch '$BRANCH' in '$ORIGIN' has been deleted."
 	echo "- You are now on branch '$(git_current_branch)'"
 	echo
+}
+
+cmd_request() {
+        OPTIONS_SPEC="\
+git flow feature request [-h] [<name>]
+
+Publish feature branch <name> on $ORIGIN and open a browser page to initiate a pull request.
+--
+h,help!         Show this help
+showcommands!   Show git commands while executing them
+"
+        cmd_publish "$@"
+        printf "Pull request title: "
+        read pr_title
+        printf "Pull request body: "
+        read pr_body
+        printf "Pull request user: [$USER]"
+        read pr_user
+        printf "Pull request branch [$BRANCH]: "
+        read pr_branch
+        printf "Pull request base [$DEVELOP_BRANCH]: "
+        read pr_base
+        if [[ -z $pr_user ]]; then pr_branch=$USER; fi
+        if [[ -z $pr_branch ]]; then pr_branch=$BRANCH; fi
+        if [[ -z $pr_base ]]; then pr_base=$DEVELOP_BRANCH; fi
+        pr_url=$(sed -e 's/^\(.*\)\/.*/\1/' <<< `git config --get remote.origin.url`)
+        pr_org_and_repo=$(sed -e 's/.*\/\(.*\)\/\(.*\)\.git$/\1\/\2/' <<< `git config --get remote.origin.url`)
+
+        pr_file=".git_flow_request"
+        touch $pr_file
+        echo '{' >> $pr_file
+        echo "\"title\":\"$pr_title\"," >> $pr_file
+        echo "\"body\":\"$pr_body\"," >> $pr_file
+        echo "\"head\":\"$pr_branch\"," >> $pr_file
+        echo "\"base\":\"$pr_base\"" >> $pr_file
+        echo '}' >> $pr_file
+        curl -s -u $pr_user -X POST "$pr_url/api/v3/repos/$pr_org/$pr_repo/pulls" -d@$pr_file
 }
