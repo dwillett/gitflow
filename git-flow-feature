@@ -834,7 +834,7 @@ showcommands!   Show git commands while executing them
         read pr_branch
         printf "Pull request base [$DEVELOP_BRANCH]: "
         read pr_base
-        if [[ -z $pr_user ]]; then pr_branch=$USER; fi
+        if [[ -z $pr_user ]]; then pr_user=$USER; fi
         if [[ -z $pr_branch ]]; then pr_branch=$BRANCH; fi
         if [[ -z $pr_base ]]; then pr_base=$DEVELOP_BRANCH; fi
         pr_url=$(sed -e 's/^\(.*\)\/.*/\1/' <<< `git config --get remote.origin.url`)
